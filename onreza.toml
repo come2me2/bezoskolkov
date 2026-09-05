@@ -12,9 +12,12 @@ compute = "process"
 entry = ".next/standalone/server.js"
 
 [env.declarations]
-SMTP_HOST = { visibility = "sensitive", required = true }
+# Gmail SMTP с ONREZA часто даёт таймаут — для продакшена задайте Telegram.
+TELEGRAM_BOT_TOKEN = { visibility = "sensitive", required = false }
+TELEGRAM_CHAT_ID = { visibility = "sensitive", required = false }
+SMTP_HOST = { visibility = "sensitive", required = false }
 SMTP_PORT = { visibility = "plain", required = false }
-SMTP_USER = { visibility = "sensitive", required = true }
-SMTP_PASS = { visibility = "sensitive", required = true }
+SMTP_USER = { visibility = "sensitive", required = false }
+SMTP_PASS = { visibility = "sensitive", required = false }
 SMTP_FROM = { visibility = "plain", required = false }
 LEAD_TO = { visibility = "plain", required = false }

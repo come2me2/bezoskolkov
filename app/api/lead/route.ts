@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { sendLeadEmail, smtpConfigured } from "@/lib/mail";
+import {
+  deliverLead,
+  deliveryConfigured,
+} from "@/lib/mail";
 
 export const runtime = "nodejs";
 
@@ -20,8 +23,8 @@ function isUpload(value: FormDataEntryValue): value is File {
 
 export async function POST(request: Request) {
   try {
-    if (!smtpConfigured()) {
-      console.error("[lead] SMTP is not configured");
+    if (!deliveryConfigured()) {
+      console.error("[lead] no delivery channel configured (SMTP / Telegram)");
       return NextResponse.json(
         { ok: false, error: "smtp_not_configured" },
         { status: 503 },
@@ -72,7 +75,7 @@ export async function POST(request: Request) {
       receivedAt,
     });
 
-    await sendLeadEmail({
+    await deliverLead({
       name,
       phone,
       windows,
@@ -87,20 +90,24 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "lead_failed";
     console.error("[lead] failed", error);
 
-    if (message === "smtp_not_configured") {
+    if (message === "delivery_not_configured" || message === "smtp_not_configured") {
       return NextResponse.json(
         { ok: false, error: "smtp_not_configured" },
         { status: 503 },
       );
     }
 
-    // Nodemailer auth failures
     if (
       message.includes("Invalid login") ||
       message.includes("EAUTH") ||
-      message.includes("BadCredentials")
+      message.includes("BadCredentials") ||
+      message === "smtp_auth_failed"
     ) {
       return NextResponse.json({ ok: false, error: "smtp_auth_failed" }, { status: 502 });
+    }
+
+    if (message === "delivery_timeout") {
+      return NextResponse.json({ ok: false, error: "delivery_timeout" }, { status: 504 });
     }
 
     return NextResponse.json({ ok: false, error: "send_failed" }, { status: 500 });

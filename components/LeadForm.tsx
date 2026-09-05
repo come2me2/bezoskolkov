@@ -84,6 +84,9 @@ export function PhotoLeadForm({
         if (data?.error === "smtp_auth_failed") {
           throw new Error("smtp_auth");
         }
+        if (data?.error === "delivery_timeout") {
+          throw new Error("timeout");
+        }
         if (data?.error === "consent_required") {
           throw new Error("consent");
         }
@@ -95,8 +98,8 @@ export function PhotoLeadForm({
       setStatus("error");
       const code = err instanceof Error ? err.message : "fail";
       const message =
-        code === "smtp" || code === "smtp_auth"
-          ? "Не удалось отправить на почту. Позвоните нам: +7 911 419-91-00"
+        code === "smtp" || code === "smtp_auth" || code === "timeout"
+          ? "Не удалось отправить заявку. Позвоните нам: +7 911 419-91-00"
           : code === "consent"
             ? "Отметьте согласие с политикой и обработкой персональных данных."
             : "Не удалось отправить. Позвоните нам или попробуйте ещё раз.";

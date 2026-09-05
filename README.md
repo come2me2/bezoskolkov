@@ -33,25 +33,24 @@ npm start
 2. В [ONREZA](https://onreza.ru) подключите GitHub и выберите этот репозиторий.
 3. В проекте должен быть `onreza.toml` (entry: `.next/standalone/server.js`).
 4. После пуша в `main` дождитесь нового деплоя или нажмите **Redeploy** на последнем коммите.
-5. Проверьте SMTP-переменные в настройках проекта (см. выше).
+5. Задайте доставку заявок (см. ниже). На ONREZA надёжнее **Telegram**, чем Gmail SMTP.
 
 Если на сайте «старая» версия: откройте уникальный URL свежего деплоя (не только production alias) и сделайте hard refresh (Cmd+Shift+R).
 
-## Заявки на почту
+## Заявки (почта / Telegram)
 
-Форма шлёт письма сразу на две почты:
+Форма доставляет заявку через **Telegram** и/или **SMTP**. Достаточно одного рабочего канала.
 
-- `belieokna2009@gmail.com`
-- `sir.kalinin@gmail.com`
+На ONREZA (серверы в РФ) исходящий SMTP к `smtp.gmail.com` часто **зависает до 504** — переменные могут быть верными, но соединение не устанавливается. Для продакшена задайте Telegram:
 
-Нужны SMTP-переменные (локально в `.env.local`, на ONREZA — в настройках проекта):
+1. Создайте бота у [@BotFather](https://t.me/BotFather) → `TELEGRAM_BOT_TOKEN`
+2. Напишите боту `/start`, узнайте свой `chat_id` (например через [@userinfobot](https://t.me/userinfobot)) → `TELEGRAM_CHAT_ID`
+3. Пропишите обе переменные в ONREZA и сделайте Redeploy
+
+Опционально SMTP (локально с Gmail обычно работает; в РФ можно `smtp.yandex.ru:465`):
 
 ```bash
 cp .env.example .env.local
 ```
 
-Для Gmail:
-
-1. Включите двухфакторную аутентификацию.
-2. Создайте [пароль приложения](https://myaccount.google.com/apppasswords).
-3. Укажите его в `SMTP_PASS`, в `SMTP_USER` — ящик отправителя (обычно `belieokna2009@gmail.com`).
+Почта по умолчанию: `belieokna2009@gmail.com`, `sir.kalinin@gmail.com` (`LEAD_TO`).

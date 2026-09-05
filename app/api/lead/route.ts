@@ -7,13 +7,14 @@ export const runtime = "nodejs";
 const MAX_PHOTOS = 8;
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
-function isUpload(value: FormDataEntryValue): value is Blob {
+function isUpload(value: FormDataEntryValue): value is File {
+  // Duck-type: avoid `instanceof File` (can fail across runtimes).
   return (
     typeof value === "object" &&
     value !== null &&
-    typeof (value as Blob).arrayBuffer === "function" &&
-    typeof (value as Blob).size === "number" &&
-    (value as Blob).size > 0
+    typeof value.arrayBuffer === "function" &&
+    typeof value.size === "number" &&
+    value.size > 0
   );
 }
 
@@ -53,12 +54,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "photo_too_large" }, { status: 400 });
       }
       const buffer = Buffer.from(await item.arrayBuffer());
-      const filename =
-        "name" in item && typeof item.name === "string" && item.name
-          ? item.name
-          : `photo-${index + 1}.jpg`;
       photos.push({
-        filename,
+        filename: item.name || `photo-${index + 1}.jpg`,
         content: buffer,
         contentType: item.type || "application/octet-stream",
       });

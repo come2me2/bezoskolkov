@@ -22,39 +22,50 @@ function channelLabel(channel: string) {
   return channel || "не указан";
 }
 
-function smtpConfigured() {
-  return Boolean(
-    process.env.SMTP_HOST &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS,
-  );
+function cleanEnv(value: string | undefined) {
+  if (!value) return "";
+  return value.trim().replace(/^['"]|['"]$/g, "");
+}
+
+function smtpConfig() {
+  const host = cleanEnv(process.env.SMTP_HOST);
+  const user = cleanEnv(process.env.SMTP_USER);
+  const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
+  const port = Number(cleanEnv(process.env.SMTP_PORT) || "587");
+  const from =
+    cleanEnv(process.env.SMTP_FROM) ||
+    (user ? `"${BRAND_NAME}" <${user}>` : "");
+
+  return { host, user, pass, port, from };
+}
+
+export function smtpConfigured() {
+  const { host, user, pass } = smtpConfig();
+  return Boolean(host && user && pass);
 }
 
 function leadRecipients() {
-  const fromEnv = process.env.LEAD_TO?.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
-  if (fromEnv?.length) return fromEnv;
+  const fromEnv = cleanEnv(process.env.LEAD_TO)
+    .split(/[,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (fromEnv.length) return fromEnv;
   return [...LEAD_INBOXES];
 }
 
 export async function sendLeadEmail(payload: LeadMailPayload) {
-  if (!smtpConfigured()) {
+  const { host, user, pass, port, from } = smtpConfig();
+
+  if (!host || !user || !pass) {
     throw new Error("smtp_not_configured");
   }
 
-  const port = Number(process.env.SMTP_PORT || 587);
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host,
     port,
     secure: port === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+    auth: { user, pass },
   });
-
-  const from =
-    process.env.SMTP_FROM ||
-    `"${BRAND_NAME}" <${process.env.SMTP_USER}>`;
 
   const subject = `Заявка ${BRAND_NAME}: ${payload.phone}${
     payload.windows ? `, окон: ${payload.windows}` : ""

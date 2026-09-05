@@ -81,6 +81,9 @@ export function PhotoLeadForm({
         if (data?.error === "smtp_not_configured") {
           throw new Error("smtp");
         }
+        if (data?.error === "smtp_auth_failed") {
+          throw new Error("smtp_auth");
+        }
         if (data?.error === "consent_required") {
           throw new Error("consent");
         }
@@ -90,10 +93,11 @@ export function PhotoLeadForm({
       setStatus("done");
     } catch (err) {
       setStatus("error");
+      const code = err instanceof Error ? err.message : "fail";
       const message =
-        err instanceof Error && err.message === "smtp"
-          ? "Почта ещё не настроена на сервере. Позвоните нам или напишите на e-mail."
-          : err instanceof Error && err.message === "consent"
+        code === "smtp" || code === "smtp_auth"
+          ? "Не удалось отправить на почту. Позвоните нам: +7 911 419-91-00"
+          : code === "consent"
             ? "Отметьте согласие с политикой и обработкой персональных данных."
             : "Не удалось отправить. Позвоните нам или попробуйте ещё раз.";
       setError(message);
@@ -309,7 +313,14 @@ export function PhotoLeadForm({
         </label>
       </div>
 
-      {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl bg-danger/10 px-3 py-2 text-sm font-medium text-danger"
+        >
+          {error}
+        </p>
+      ) : null}
 
       <Button
         type="submit"

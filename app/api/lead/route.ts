@@ -1,14 +1,32 @@
 import { NextResponse } from "next/server";
 
-import { sendLeadEmail } from "@/lib/mail";
+import { sendLeadEmail, smtpConfigured } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
 const MAX_PHOTOS = 8;
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
+function isUpload(value: FormDataEntryValue): value is Blob {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Blob).arrayBuffer === "function" &&
+    typeof (value as Blob).size === "number" &&
+    (value as Blob).size > 0
+  );
+}
+
 export async function POST(request: Request) {
   try {
+    if (!smtpConfigured()) {
+      console.error("[lead] SMTP is not configured");
+      return NextResponse.json(
+        { ok: false, error: "smtp_not_configured" },
+        { status: 503 },
+      );
+    }
+
     const form = await request.formData();
     const phone = String(form.get("phone") ?? "").trim();
     const name = String(form.get("name") ?? "").trim();
@@ -29,21 +47,25 @@ export async function POST(request: Request) {
 
     const photos: Array<{ filename: string; content: Buffer; contentType: string }> = [];
     for (const [index, item] of rawPhotos.entries()) {
-      if (!(item instanceof File) || item.size === 0) continue;
+      if (!isUpload(item)) continue;
       if (photos.length >= MAX_PHOTOS) break;
       if (item.size > MAX_PHOTO_BYTES) {
         return NextResponse.json({ ok: false, error: "photo_too_large" }, { status: 400 });
       }
       const buffer = Buffer.from(await item.arrayBuffer());
+      const filename =
+        "name" in item && typeof item.name === "string" && item.name
+          ? item.name
+          : `photo-${index + 1}.jpg`;
       photos.push({
-        filename: item.name || `photo-${index + 1}.jpg`,
+        filename,
         content: buffer,
         contentType: item.type || "application/octet-stream",
       });
     }
 
     const receivedAt = new Date().toISOString();
-    const payload = {
+    console.info("[lead]", {
       name,
       phone,
       windows,
@@ -51,9 +73,7 @@ export async function POST(request: Request) {
       variant,
       photos: photos.length,
       receivedAt,
-    };
-
-    console.info("[lead]", payload);
+    });
 
     await sendLeadEmail({
       name,
@@ -75,6 +95,15 @@ export async function POST(request: Request) {
         { ok: false, error: "smtp_not_configured" },
         { status: 503 },
       );
+    }
+
+    // Nodemailer auth failures
+    if (
+      message.includes("Invalid login") ||
+      message.includes("EAUTH") ||
+      message.includes("BadCredentials")
+    ) {
+      return NextResponse.json({ ok: false, error: "smtp_auth_failed" }, { status: 502 });
     }
 
     return NextResponse.json({ ok: false, error: "send_failed" }, { status: 500 });

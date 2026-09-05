@@ -11,9 +11,7 @@ import {
   EMAIL,
   INN,
   LEGAL_NAME,
-  MAX,
   mailtoHref,
-  maxHref,
   NAV,
   OGRN,
   PHONE,
@@ -67,22 +65,6 @@ export function Footer() {
               ) : (
                 <a href={mailtoHref()} className="text-bone">
                   {EMAIL}
-                </a>
-              )}
-            </p>
-            <p>
-              MAX:{" "}
-              {isPlaceholderContact(MAX) ? (
-                MAX
-              ) : (
-                <a
-                  href={maxHref()}
-                  className="text-bone"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => analytics.track("max_click")}
-                >
-                  Написать в MAX
                 </a>
               )}
             </p>

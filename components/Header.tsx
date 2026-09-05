@@ -10,10 +10,7 @@ import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
 import {
   BRAND_NAME,
-  CITY_SHORT,
   CTA,
-  EMAIL,
-  mailtoHref,
   NAV,
   PHONE_DISPLAY,
   telHref,
@@ -45,7 +42,7 @@ export function Header() {
         scrolled || open ? "glass border-line" : "bg-ink/40 backdrop-blur-md",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 md:h-[4.25rem] md:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-5 md:h-[4.25rem] md:gap-4 md:px-8">
         <Link href="#top" className="shrink-0" aria-label={`${BRAND_NAME} — на главную`}>
           <Image
             src="/images/logo-wordmark.png"
@@ -53,41 +50,35 @@ export function Header() {
             width={989}
             height={168}
             priority
-            className="h-8 w-auto max-w-[min(52vw,220px)] object-contain object-left bg-transparent sm:h-9 sm:max-w-[260px] md:h-10 md:max-w-[300px]"
+            className="h-8 w-auto max-w-[min(48vw,200px)] object-contain object-left bg-transparent sm:h-9 sm:max-w-[220px] lg:max-w-[200px] xl:h-10 xl:max-w-[240px]"
           />
         </Link>
 
-        <nav className="hidden items-center gap-5 xl:gap-6 lg:flex" aria-label="Основная навигация">
+        <nav
+          className="hidden min-w-0 flex-1 items-center justify-center gap-3 xl:gap-5 lg:flex"
+          aria-label="Основная навигация"
+        >
           {NAV.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className="text-sm text-mute transition-colors hover:text-bone"
+              className="whitespace-nowrap text-[13px] text-mute transition-colors hover:text-bone xl:text-sm"
             >
               {item.label}
             </a>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden flex-col items-end leading-tight lg:flex">
-            <a
-              href={telHref()}
-              className="text-sm font-semibold text-bone transition-colors hover:text-cta"
-              onClick={() => analytics.track("phone_click")}
-            >
-              {PHONE_DISPLAY}
-            </a>
-            <a
-              href={mailtoHref()}
-              className="text-[11px] text-mute transition-colors hover:text-bone"
-            >
-              {EMAIL}
-            </a>
-          </div>
-          <span className="hidden text-xs text-mute xl:inline">{CITY_SHORT}</span>
+        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+          <a
+            href={telHref()}
+            className="hidden whitespace-nowrap text-sm font-semibold text-bone transition-colors hover:text-cta lg:inline"
+            onClick={() => analytics.track("phone_click")}
+          >
+            {PHONE_DISPLAY}
+          </a>
           <ThemeToggle />
-          <Button asChild size="sm" className="hidden sm:inline-flex">
+          <Button asChild size="sm" className="hidden whitespace-nowrap sm:inline-flex">
             <a href="#lead">{CTA.calculate}</a>
           </Button>
           <Button
@@ -130,13 +121,6 @@ export function Header() {
               }}
             >
               {PHONE_DISPLAY}
-            </a>
-            <a
-              href={mailtoHref()}
-              className="block text-sm text-mute"
-              onClick={() => setOpen(false)}
-            >
-              {EMAIL}
             </a>
           </div>
           <Button asChild className="mt-6 w-full">

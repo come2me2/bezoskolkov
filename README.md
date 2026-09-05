@@ -33,24 +33,35 @@ npm start
 2. В [ONREZA](https://onreza.ru) подключите GitHub и выберите этот репозиторий.
 3. В проекте должен быть `onreza.toml` (entry: `.next/standalone/server.js`).
 4. После пуша в `main` дождитесь нового деплоя или нажмите **Redeploy** на последнем коммите.
-5. Задайте доставку заявок (см. ниже). На ONREZA надёжнее **Telegram**, чем Gmail SMTP.
+5. Задайте Яндекс SMTP в переменных окружения (см. ниже).
 
 Если на сайте «старая» версия: откройте уникальный URL свежего деплоя (не только production alias) и сделайте hard refresh (Cmd+Shift+R).
 
-## Заявки (почта / Telegram)
+## Заявки на почту (Яндекс SMTP)
 
-Форма доставляет заявку через **Telegram** и/или **SMTP**. Достаточно одного рабочего канала.
+На ONREZA Gmail SMTP часто недоступен (таймаут 504). Используйте **Яндекс Почту** как отправителя; заявки могут приходить на Gmail в `LEAD_TO`.
 
-На ONREZA (серверы в РФ) исходящий SMTP к `smtp.gmail.com` часто **зависает до 504** — переменные могут быть верными, но соединение не устанавливается. Для продакшена задайте Telegram:
+1. Создайте или возьмите ящик на [mail.yandex.ru](https://mail.yandex.ru).
+2. Включите доступ почтовых клиентов: настройки почты → «Почтовые программы» → IMAP.
+3. Создайте [пароль приложения](https://id.yandex.ru/security/app-passwords) для «Почта».
+4. В ONREZA (и локально в `.env.local`) задайте:
 
-1. Создайте бота у [@BotFather](https://t.me/BotFather) → `TELEGRAM_BOT_TOKEN`
-2. Напишите боту `/start`, узнайте свой `chat_id` (например через [@userinfobot](https://t.me/userinfobot)) → `TELEGRAM_CHAT_ID`
-3. Пропишите обе переменные в ONREZA и сделайте Redeploy
+```bash
+SMTP_HOST=smtp.yandex.ru
+SMTP_PORT=465
+SMTP_USER=ваш@yandex.ru
+SMTP_PASS=пароль_приложения
+SMTP_FROM="БезОсколков <ваш@yandex.ru>"
+LEAD_TO=belieokna2009@gmail.com,sir.kalinin@gmail.com
+```
 
-Опционально SMTP (локально с Gmail обычно работает; в РФ можно `smtp.yandex.ru:465`):
+5. Redeploy после сохранения переменных.
+
+Локально:
 
 ```bash
 cp .env.example .env.local
+# подставьте свой @yandex.ru и пароль приложения
 ```
 
-Почта по умолчанию: `belieokna2009@gmail.com`, `sir.kalinin@gmail.com` (`LEAD_TO`).
+Опционально можно добавить `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` — тогда заявка уйдёт и в Telegram.

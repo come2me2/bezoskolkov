@@ -10,15 +10,15 @@ import {
   CITY_SHORT,
   EMAIL,
   INN,
+  LEGAL_NAME,
+  MAX,
   mailtoHref,
+  maxHref,
   NAV,
   OGRN,
   PHONE,
-  telegramHref,
+  PHONE_DISPLAY,
   telHref,
-  WHATSAPP,
-  TELEGRAM,
-  whatsappHref,
   isPlaceholderContact,
 } from "@/lib/constants";
 
@@ -38,6 +38,12 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
+            <Link href="/privacy" className="text-mute hover:text-bone">
+              Политика конфиденциальности
+            </Link>
+            <Link href="/consent" className="text-mute hover:text-bone">
+              Согласие на обработку данных
+            </Link>
           </nav>
           <div className="space-y-2 text-sm text-mute">
             <p>
@@ -50,7 +56,7 @@ export function Footer() {
                   className="text-bone"
                   onClick={() => analytics.track("phone_click")}
                 >
-                  {PHONE}
+                  {PHONE_DISPLAY}
                 </a>
               )}
             </p>
@@ -65,41 +71,39 @@ export function Footer() {
               )}
             </p>
             <p>
-              Telegram:{" "}
-              {isPlaceholderContact(TELEGRAM) ? (
-                TELEGRAM
+              MAX:{" "}
+              {isPlaceholderContact(MAX) ? (
+                MAX
               ) : (
                 <a
-                  href={telegramHref()}
+                  href={maxHref()}
                   className="text-bone"
-                  onClick={() => analytics.track("telegram_click")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => analytics.track("max_click")}
                 >
-                  {TELEGRAM}
+                  Написать в MAX
                 </a>
               )}
             </p>
-            <p>
-              WhatsApp:{" "}
-              {isPlaceholderContact(WHATSAPP) ? (
-                WHATSAPP
-              ) : (
-                <a
-                  href={whatsappHref()}
-                  className="text-bone"
-                  onClick={() => analytics.track("whatsapp_click")}
-                >
-                  {WHATSAPP}
-                </a>
-              )}
-            </p>
-            <p className="pt-4 text-xs">ИНН: {INN}</p>
-            <p className="text-xs">ОГРН: {OGRN}</p>
+            <p className="pt-4 text-xs text-bone">{LEGAL_NAME}</p>
+            <p className="text-xs">ИНН: {INN}</p>
+            <p className="text-xs">ОГРНИП: {OGRN}</p>
           </div>
         </div>
         <p className="mt-12 max-w-3xl text-xs leading-relaxed text-mute/80">
           Плёнка не предназначена для защиты от прямого попадания БПЛА и не делает стекло
           неразбиваемым. Она предназначена для удержания фрагментов повреждённого стекла и снижения
           риска их разлёта.
+        </p>
+        <p className="mt-4 text-xs text-mute/80">
+          <Link href="/privacy" className="underline-offset-2 hover:text-bone hover:underline">
+            Политика конфиденциальности
+          </Link>
+          {" · "}
+          <Link href="/consent" className="underline-offset-2 hover:text-bone hover:underline">
+            Согласие на обработку персональных данных
+          </Link>
         </p>
       </Container>
     </footer>

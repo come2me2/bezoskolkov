@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Check, Upload } from "lucide-react";
+import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,8 @@ export function PhotoLeadForm({
   const [files, setFiles] = useState<File[]>([]);
   const [drag, setDrag] = useState(false);
   const [started, setStarted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,6 +59,10 @@ export function PhotoLeadForm({
       setError("Укажите номер телефона полностью.");
       return;
     }
+    if (!privacyAccepted || !consentAccepted) {
+      setError("Отметьте согласие с политикой и обработкой персональных данных.");
+      return;
+    }
     setError("");
     setStatus("sending");
     try {
@@ -65,14 +72,31 @@ export function PhotoLeadForm({
       body.set("windows", windows);
       body.set("channel", channel);
       body.set("variant", variant);
+      body.set("privacyAccepted", "true");
+      body.set("consentAccepted", "true");
       files.forEach((file) => body.append("photos", file));
       const res = await fetch("/api/lead", { method: "POST", body });
-      if (!res.ok) throw new Error("fail");
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) {
+        if (data?.error === "smtp_not_configured") {
+          throw new Error("smtp");
+        }
+        if (data?.error === "consent_required") {
+          throw new Error("consent");
+        }
+        throw new Error("fail");
+      }
       analytics.track("lead_submit", { windows, channel, photos: files.length, variant });
       setStatus("done");
-    } catch {
+    } catch (err) {
       setStatus("error");
-      setError("Не удалось отправить. Позвоните нам или попробуйте ещё раз.");
+      const message =
+        err instanceof Error && err.message === "smtp"
+          ? "Почта ещё не настроена на сервере. Позвоните нам или напишите на e-mail."
+          : err instanceof Error && err.message === "consent"
+            ? "Отметьте согласие с политикой и обработкой персональных данных."
+            : "Не удалось отправить. Позвоните нам или попробуйте ещё раз.";
+      setError(message);
     }
   };
 
@@ -180,7 +204,7 @@ export function PhotoLeadForm({
           <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-cta">Шаг 4</p>
           <fieldset className="mt-3">
             <legend className="text-lg font-medium text-bone">Как с вами связаться?</legend>
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2">
               {CONTACT_CHANNELS.map((item) => (
                 <button
                   key={item.id}
@@ -252,9 +276,47 @@ export function PhotoLeadForm({
         </div>
       )}
 
+      <div className="mt-6 space-y-3">
+        <label className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-mute">
+          <input
+            type="checkbox"
+            checked={privacyAccepted}
+            onChange={(e) => setPrivacyAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-line accent-cta"
+            required
+          />
+          <span>
+            Я соглашаюсь с{" "}
+            <Link href="/privacy" target="_blank" className="text-bone underline-offset-2 hover:underline">
+              Политикой конфиденциальности
+            </Link>
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-mute">
+          <input
+            type="checkbox"
+            checked={consentAccepted}
+            onChange={(e) => setConsentAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-line accent-cta"
+            required
+          />
+          <span>
+            Я даю{" "}
+            <Link href="/consent" target="_blank" className="text-bone underline-offset-2 hover:underline">
+              согласие на обработку персональных данных
+            </Link>
+          </span>
+        </label>
+      </div>
+
       {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
-      <Button type="submit" size="lg" className="mt-8 w-full" disabled={status === "sending"}>
+      <Button
+        type="submit"
+        size="lg"
+        className="mt-8 w-full"
+        disabled={status === "sending" || !privacyAccepted || !consentAccepted}
+      >
         {variant === "full" ? CTA.getEstimateArrow : CTA.getEstimate}
       </Button>
       <p className="mt-3 text-center text-xs text-mute">{MICROCOPY.response}</p>

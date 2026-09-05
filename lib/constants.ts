@@ -1,10 +1,17 @@
 export const BRAND_NAME = "БезОсколков";
 export const BRAND_TAGLINE = "Защитные плёнки для окон";
 
-export const PHONE = "placeholder";
-export const EMAIL = "placeholder";
-export const TELEGRAM = "placeholder";
-export const WHATSAPP = "placeholder";
+export const PHONE = "+79114199100";
+export const EMAIL = "belieokna2009@gmail.com";
+/** Ящики, куда уходят заявки с сайта */
+export const LEAD_INBOXES = [
+  EMAIL,
+  "sir.kalinin@gmail.com",
+] as const;
+/** Ссылка MAX: полный URL (`https://max.ru/u/...` или `https://max.ru/@bot`) либо `@botname` */
+export const MAX = "placeholder";
+
+export const PHONE_DISPLAY = "+7 911 419-91-00";
 
 export const CITY = "Москва";
 export const REGION = "Московская область";
@@ -21,8 +28,9 @@ export const FREE_VISIT_FROM_WINDOWS = 3;
 export const RESPONSE_MINUTES = 5;
 export const CALCULATION_MINUTES = 5;
 
-export const INN = "placeholder";
-export const OGRN = "placeholder";
+export const LEGAL_NAME = "ИП Шукюров Ильяс Ниязи оглы";
+export const INN = "100129422996";
+export const OGRN = "318100100020399";
 
 export const SITE_URL = "https://bezoskolkov.ru";
 
@@ -127,8 +135,7 @@ export type ObjectTypeId = (typeof OBJECT_TYPES)[number]["id"];
 
 export const CONTACT_CHANNELS = [
   { id: "phone", label: "Телефон" },
-  { id: "telegram", label: "Telegram" },
-  { id: "whatsapp", label: "WhatsApp" },
+  { id: "max", label: "MAX" },
 ] as const;
 
 export type ContactChannelId = (typeof CONTACT_CHANNELS)[number]["id"];
@@ -418,15 +425,12 @@ export function telHref() {
   return `tel:${PHONE.replace(/[^\d+]/g, "")}`;
 }
 
-export function telegramHref() {
-  if (isPlaceholderContact(TELEGRAM)) return "#lead";
-  const handle = TELEGRAM.replace(/^@/, "");
-  return `https://t.me/${handle}`;
-}
-
-export function whatsappHref() {
-  if (isPlaceholderContact(WHATSAPP)) return "#lead";
-  return `https://wa.me/${WHATSAPP.replace(/\D/g, "")}`;
+export function maxHref() {
+  if (isPlaceholderContact(MAX)) return "#lead";
+  const value = MAX.trim();
+  if (/^https?:\/\//i.test(value)) return value;
+  const handle = value.replace(/^@/, "");
+  return `https://max.ru/@${handle}`;
 }
 
 export function mailtoHref() {

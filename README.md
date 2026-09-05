@@ -34,3 +34,22 @@ npm start
 3. Платформа найдёт `next.config`, выполнит `npm run build` и поднимет standalone-сервер.
 
 Production-ветка: `main`.
+
+## Заявки на почту
+
+Форма шлёт письма сразу на две почты:
+
+- `belieokna2009@gmail.com`
+- `sir.kalinin@gmail.com`
+
+Нужны SMTP-переменные (локально в `.env.local`, на ONREZA — в настройках проекта):
+
+```bash
+cp .env.example .env.local
+```
+
+Для Gmail:
+
+1. Включите двухфакторную аутентификацию.
+2. Создайте [пароль приложения](https://myaccount.google.com/apppasswords).
+3. Укажите его в `SMTP_PASS`, в `SMTP_USER` — ящик отправителя (обычно `belieokna2009@gmail.com`).

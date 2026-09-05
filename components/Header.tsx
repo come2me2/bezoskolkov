@@ -7,7 +7,17 @@ import { useEffect, useState } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { BRAND_NAME, CITY_SHORT, CTA, NAV } from "@/lib/constants";
+import { analytics } from "@/lib/analytics";
+import {
+  BRAND_NAME,
+  CITY_SHORT,
+  CTA,
+  EMAIL,
+  mailtoHref,
+  NAV,
+  PHONE_DISPLAY,
+  telHref,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function Header() {
@@ -43,11 +53,11 @@ export function Header() {
             width={989}
             height={168}
             priority
-            className="h-8 w-auto max-w-[min(58vw,240px)] object-contain object-left bg-transparent sm:h-9 sm:max-w-[280px] md:h-10 md:max-w-[320px]"
+            className="h-8 w-auto max-w-[min(52vw,220px)] object-contain object-left bg-transparent sm:h-9 sm:max-w-[260px] md:h-10 md:max-w-[300px]"
           />
         </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex" aria-label="Основная навигация">
+        <nav className="hidden items-center gap-5 xl:gap-6 lg:flex" aria-label="Основная навигация">
           {NAV.map((item) => (
             <a
               key={item.href}
@@ -60,7 +70,22 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="hidden text-xs text-mute md:inline">{CITY_SHORT}</span>
+          <div className="hidden flex-col items-end leading-tight lg:flex">
+            <a
+              href={telHref()}
+              className="text-sm font-semibold text-bone transition-colors hover:text-cta"
+              onClick={() => analytics.track("phone_click")}
+            >
+              {PHONE_DISPLAY}
+            </a>
+            <a
+              href={mailtoHref()}
+              className="text-[11px] text-mute transition-colors hover:text-bone"
+            >
+              {EMAIL}
+            </a>
+          </div>
+          <span className="hidden text-xs text-mute xl:inline">{CITY_SHORT}</span>
           <ThemeToggle />
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <a href="#lead">{CTA.calculate}</a>
@@ -94,6 +119,26 @@ export function Header() {
               </a>
             ))}
           </nav>
+          <div className="mt-6 space-y-2 border-t border-line pt-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-mute">Контакты</p>
+            <a
+              href={telHref()}
+              className="block text-lg font-semibold text-bone"
+              onClick={() => {
+                analytics.track("phone_click");
+                setOpen(false);
+              }}
+            >
+              {PHONE_DISPLAY}
+            </a>
+            <a
+              href={mailtoHref()}
+              className="block text-sm text-mute"
+              onClick={() => setOpen(false)}
+            >
+              {EMAIL}
+            </a>
+          </div>
           <Button asChild className="mt-6 w-full">
             <a href="#lead" onClick={() => setOpen(false)}>
               {CTA.calculate}

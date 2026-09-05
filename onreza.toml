@@ -1,0 +1,20 @@
+#:schema https://raw.githubusercontent.com/ONREZA/nrz-cli/main/onreza.schema.json
+
+[project]
+name = "bezoskolkov"
+
+[build]
+command = "npm run build"
+output_dirs = [".next"]
+
+[deploy]
+compute = "process"
+entry = ".next/standalone/server.js"
+
+[env.declarations]
+SMTP_HOST = { visibility = "sensitive", required = true }
+SMTP_PORT = { visibility = "plain", required = false }
+SMTP_USER = { visibility = "sensitive", required = true }
+SMTP_PASS = { visibility = "sensitive", required = true }
+SMTP_FROM = { visibility = "plain", required = false }
+LEAD_TO = { visibility = "plain", required = false }

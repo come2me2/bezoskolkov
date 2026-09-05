@@ -31,9 +31,11 @@ npm start
 
 1. Залейте репозиторий на GitHub.
 2. В [ONREZA](https://onreza.ru) подключите GitHub и выберите этот репозиторий.
-3. Платформа найдёт `next.config`, выполнит `npm run build` и поднимет standalone-сервер.
+3. В проекте должен быть `onreza.toml` (entry: `.next/standalone/server.js`).
+4. После пуша в `main` дождитесь нового деплоя или нажмите **Redeploy** на последнем коммите.
+5. Проверьте SMTP-переменные в настройках проекта (см. выше).
 
-Production-ветка: `main`.
+Если на сайте «старая» версия: откройте уникальный URL свежего деплоя (не только production alias) и сделайте hard refresh (Cmd+Shift+R).
 
 ## Заявки на почту
 

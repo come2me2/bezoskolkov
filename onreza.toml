@@ -1,7 +1,8 @@
-#:schema https://raw.githubusercontent.com/ONREZA/nrz-cli/main/onreza.schema.json
+#:schema https://docs.onreza.ru/schemas/onreza-project-v1.schema.json
 
 [project]
 name = "bezoskolkov"
+framework = "next"
 
 [build]
 command = "npm run build"
@@ -12,8 +13,9 @@ compute = "process"
 entry = ".next/standalone/server.js"
 
 [env.declarations]
-TELEGRAM_BOT_TOKEN = { visibility = "sensitive", required = true }
-TELEGRAM_CHAT_ID = { visibility = "sensitive", required = true }
+# Задайте в панели ONREZA — иначе заявки не уйдут. Не блокируем деплой, если пусто.
+TELEGRAM_BOT_TOKEN = { visibility = "sensitive", required = false }
+TELEGRAM_CHAT_ID = { visibility = "sensitive", required = false }
 SMTP_HOST = { visibility = "sensitive", required = false }
 SMTP_PORT = { visibility = "plain", required = false }
 SMTP_USER = { visibility = "sensitive", required = false }

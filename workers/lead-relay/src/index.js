@@ -74,9 +74,21 @@ export default {
       return new Response("Method Not Allowed", { status: 405 });
     }
 
-    const secret = request.headers.get("x-webhook-secret") || "";
-    if (!env.WEBHOOK_SECRET || secret !== env.WEBHOOK_SECRET) {
-      return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    const secret = (request.headers.get("x-webhook-secret") || "").trim();
+    const expected = String(env.WEBHOOK_SECRET || env.LEAD_WEBHOOK_SECRET || "").trim();
+    if (!expected) {
+      return Response.json({ ok: false, error: "secret_not_configured" }, { status: 503 });
+    }
+    if (secret !== expected) {
+      return Response.json(
+        {
+          ok: false,
+          error: "unauthorized",
+          gotLen: secret.length,
+          expectedLen: expected.length,
+        },
+        { status: 401 },
+      );
     }
 
     const token = clean(env.TELEGRAM_BOT_TOKEN);

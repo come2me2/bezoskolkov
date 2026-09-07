@@ -61,6 +61,42 @@ function telegramChatIds(): Array<string | number> {
     .map((id) => (/^-?\d+$/.test(id) ? Number(id) : id));
 }
 
+/** Hard deadline — Bun AbortSignal.timeout can hang when the host is unreachable. */
+async function fetchWithDeadline(
+  url: string,
+  init: RequestInit | undefined,
+  ms: number,
+): Promise<Response> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      fetch(url, init),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("telegram_timeout")), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+export async function probeTelegramApi() {
+  const token = cleanEnv(process.env.TELEGRAM_BOT_TOKEN);
+  if (!token) return { ok: false, error: "no_token" as const };
+  try {
+    const res = await fetchWithDeadline(
+      `https://api.telegram.org/bot${token}/getMe`,
+      { method: "GET" },
+      8_000,
+    );
+    if (!res.ok) return { ok: false, error: `http_${res.status}` as const };
+    return { ok: true as const };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown";
+    return { ok: false, error: message };
+  }
+}
+
 function leadRecipients() {
   const fromEnv = cleanEnv(process.env.LEAD_TO)
     .split(/[,;]+/)
@@ -143,27 +179,27 @@ export async function sendLeadTelegram(payload: LeadMailPayload) {
   }
 
   const text = leadText(payload);
-  let delivered = 0;
-  const errors: string[] = [];
 
-  for (const chatId of chatIds) {
-    try {
-      const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          disable_web_page_preview: true,
-        }),
-        signal: AbortSignal.timeout(15_000),
-      });
+  const results = await Promise.allSettled(
+    chatIds.map(async (chatId) => {
+      const msgRes = await fetchWithDeadline(
+        `https://api.telegram.org/bot${token}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            disable_web_page_preview: true,
+          }),
+        },
+        10_000,
+      );
 
       if (!msgRes.ok) {
         const body = await msgRes.text().catch(() => "");
         console.error("[lead] telegram message failed", chatId, msgRes.status, body.slice(0, 300));
-        errors.push(String(chatId));
-        continue;
+        throw new Error(`telegram_http_${msgRes.status}`);
       }
 
       for (const photo of payload.photos.slice(0, 8)) {
@@ -176,27 +212,29 @@ export async function sendLeadTelegram(payload: LeadMailPayload) {
           }),
           photo.filename,
         );
-        const docRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
-          method: "POST",
-          body: form,
-          signal: AbortSignal.timeout(30_000),
-        });
+        const docRes = await fetchWithDeadline(
+          `https://api.telegram.org/bot${token}/sendDocument`,
+          { method: "POST", body: form },
+          20_000,
+        );
         if (!docRes.ok) {
           const body = await docRes.text().catch(() => "");
           console.error("[lead] telegram document failed", chatId, docRes.status, body.slice(0, 300));
           throw new Error("telegram_failed");
         }
       }
+    }),
+  );
 
-      delivered += 1;
-    } catch (error) {
-      console.error("[lead] telegram chat failed", chatId, error);
-      errors.push(String(chatId));
-    }
-  }
-
+  const delivered = results.filter((r) => r.status === "fulfilled").length;
   if (!delivered) {
-    console.error("[lead] telegram failed for all chats", errors.join(", "));
+    const reasons = results
+      .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+      .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+    console.error("[lead] telegram failed for all chats", reasons.join("; "));
+    if (reasons.some((r) => r.includes("telegram_timeout"))) {
+      throw new Error("telegram_timeout");
+    }
     throw new Error("telegram_failed");
   }
 }
@@ -251,6 +289,9 @@ export async function deliverLead(payload: LeadMailPayload) {
 
   if (!delivered.length) {
     const joined = errors.join("; ");
+    if (joined.includes("telegram_timeout") || joined.includes("telegram_timeout")) {
+      throw new Error("telegram_timeout");
+    }
     if (joined.includes("telegram")) {
       throw new Error("telegram_failed");
     }

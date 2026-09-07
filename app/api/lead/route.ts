@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   deliverLead,
   deliveryConfigured,
+  probeTelegramApi,
   smtpConfigured,
   telegramConfigured,
 } from "@/lib/mail";
@@ -25,8 +26,10 @@ function isUpload(value: FormDataEntryValue): value is File {
 
 /** Diagnostics for delivery channels (no secrets). */
 export async function GET() {
+  const telegramApi = telegramConfigured() ? await probeTelegramApi() : null;
   return NextResponse.json({
     telegram: telegramConfigured(),
+    telegramApi,
     smtp: smtpConfigured(),
     smtpAllowed: process.env.LEAD_TRY_SMTP === "true",
     delivery: deliveryConfigured(),
@@ -109,7 +112,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (message === "telegram_required" || message === "telegram_failed") {
+    if (message === "telegram_required" || message === "telegram_failed" || message === "telegram_timeout") {
       return NextResponse.json(
         { ok: false, error: message },
         { status: 503 },

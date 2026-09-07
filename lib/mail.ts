@@ -49,7 +49,8 @@ export function telegramConfigured() {
 }
 
 export function deliveryConfigured() {
-  return smtpConfigured() || telegramConfigured();
+  const smtpAllowed = cleanEnv(process.env.LEAD_TRY_SMTP) === "true";
+  return telegramConfigured() || (smtpConfigured() && smtpAllowed);
 }
 
 function telegramChatIds(): Array<string | number> {
@@ -200,15 +201,20 @@ export async function sendLeadTelegram(payload: LeadMailPayload) {
   }
 }
 
-/** Deliver via Telegram (preferred) and optional SMTP.
- * If Telegram succeeds, SMTP is attempted in the background so slow
- * outbound SMTP (e.g. ONREZA) does not delay the form response.
+/** Deliver via Telegram (preferred). SMTP only if LEAD_TRY_SMTP=true
+ * (outbound SMTP is often blocked on ONREZA and would hang the request).
  */
 export async function deliverLead(payload: LeadMailPayload) {
   const hasTg = telegramConfigured();
   const hasSmtp = smtpConfigured();
+  const smtpAllowed = cleanEnv(process.env.LEAD_TRY_SMTP) === "true";
+  const useSmtp = hasSmtp && smtpAllowed;
 
-  if (!hasTg && !hasSmtp) {
+  if (!hasTg && !useSmtp) {
+    if (hasSmtp && !hasTg) {
+      // SMTP alone is not reliable on ONREZA — require Telegram.
+      throw new Error("telegram_required");
+    }
     throw new Error("delivery_not_configured");
   }
 
@@ -226,7 +232,7 @@ export async function deliverLead(payload: LeadMailPayload) {
     }
   }
 
-  if (hasSmtp) {
+  if (useSmtp) {
     if (delivered.length) {
       void sendLeadEmail(payload).catch((error) => {
         console.error("[lead] email failed (background)", error);
@@ -245,6 +251,9 @@ export async function deliverLead(payload: LeadMailPayload) {
 
   if (!delivered.length) {
     const joined = errors.join("; ");
+    if (joined.includes("telegram")) {
+      throw new Error("telegram_failed");
+    }
     if (joined.includes("Invalid login") || joined.includes("EAUTH")) {
       throw new Error("smtp_auth_failed");
     }

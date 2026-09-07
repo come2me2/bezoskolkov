@@ -22,3 +22,4 @@ SMTP_USER = { visibility = "sensitive", required = false }
 SMTP_PASS = { visibility = "sensitive", required = false }
 SMTP_FROM = { visibility = "plain", required = false }
 LEAD_TO = { visibility = "plain", required = false }
+LEAD_TRY_SMTP = { visibility = "plain", required = false }

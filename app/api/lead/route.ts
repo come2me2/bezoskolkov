@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import {
   deliverLead,
   deliveryConfigured,
+  smtpConfigured,
+  telegramConfigured,
 } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -19,6 +21,16 @@ function isUpload(value: FormDataEntryValue): value is File {
     typeof value.size === "number" &&
     value.size > 0
   );
+}
+
+/** Diagnostics for delivery channels (no secrets). */
+export async function GET() {
+  return NextResponse.json({
+    telegram: telegramConfigured(),
+    smtp: smtpConfigured(),
+    smtpAllowed: process.env.LEAD_TRY_SMTP === "true",
+    delivery: deliveryConfigured(),
+  });
 }
 
 export async function POST(request: Request) {
@@ -93,6 +105,13 @@ export async function POST(request: Request) {
     if (message === "delivery_not_configured" || message === "smtp_not_configured") {
       return NextResponse.json(
         { ok: false, error: "smtp_not_configured" },
+        { status: 503 },
+      );
+    }
+
+    if (message === "telegram_required" || message === "telegram_failed") {
+      return NextResponse.json(
+        { ok: false, error: message },
         { status: 503 },
       );
     }

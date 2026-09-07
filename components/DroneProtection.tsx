@@ -12,7 +12,7 @@ export function DroneProtection() {
         <div className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <Reveal>
             <Eyebrow>Взрывы и атаки БПЛА</Eyebrow>
-            <SectionTitle>Защита от осколков при взрывах и атаках БПЛА</SectionTitle>
+            <SectionTitle>Защита от осколков при взрывной волне</SectionTitle>
             <Lead>
               При атаке БПЛА повреждение окон может произойти вследствие взрывной волны, ударного
               воздействия и других факторов. Если стекло разрушается, фрагменты могут попасть внутрь

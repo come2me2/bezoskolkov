@@ -4,8 +4,10 @@ import {
   deliverLead,
   deliveryConfigured,
   probeTelegramApi,
+  probeWebhook,
   smtpConfigured,
   telegramConfigured,
+  webhookConfigured,
 } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -27,7 +29,10 @@ function isUpload(value: FormDataEntryValue): value is File {
 /** Diagnostics for delivery channels (no secrets). */
 export async function GET() {
   const telegramApi = telegramConfigured() ? await probeTelegramApi() : null;
+  const webhook = webhookConfigured() ? await probeWebhook() : null;
   return NextResponse.json({
+    webhook: webhookConfigured(),
+    webhookApi: webhook,
     telegram: telegramConfigured(),
     telegramApi,
     smtp: smtpConfigured(),
@@ -112,7 +117,13 @@ export async function POST(request: Request) {
       );
     }
 
-    if (message === "telegram_required" || message === "telegram_failed" || message === "telegram_timeout") {
+    if (
+      message === "telegram_required" ||
+      message === "telegram_failed" ||
+      message === "telegram_timeout" ||
+      message === "webhook_failed" ||
+      message === "webhook_unauthorized"
+    ) {
       return NextResponse.json(
         { ok: false, error: message },
         { status: 503 },

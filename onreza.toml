@@ -13,7 +13,9 @@ compute = "process"
 entry = ".next/standalone/server.js"
 
 [env.declarations]
-# Задайте в панели ONREZA — иначе заявки не уйдут. Не блокируем деплой, если пусто.
+# Основной канал на ONREZA: Cloudflare Worker → Telegram
+LEAD_WEBHOOK_URL = { visibility = "plain", required = false }
+LEAD_WEBHOOK_SECRET = { visibility = "sensitive", required = false }
 TELEGRAM_BOT_TOKEN = { visibility = "sensitive", required = false }
 TELEGRAM_CHAT_ID = { visibility = "sensitive", required = false }
 SMTP_HOST = { visibility = "sensitive", required = false }

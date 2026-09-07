@@ -1,0 +1,9 @@
+name = "bezoskolkov-lead-relay"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# Secrets (set via dashboard or wrangler secret put):
+# WEBHOOK_SECRET
+# TELEGRAM_BOT_TOKEN
+# TELEGRAM_CHAT_ID

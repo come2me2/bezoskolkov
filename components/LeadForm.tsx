@@ -78,10 +78,13 @@ export function PhotoLeadForm({
       const res = await fetch("/api/lead", { method: "POST", body });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
-        if (data?.error === "smtp_not_configured" || data?.error === "telegram_required") {
-          throw new Error("smtp");
-        }
-        if (data?.error === "telegram_failed") {
+        if (
+          data?.error === "smtp_not_configured" ||
+          data?.error === "telegram_required" ||
+          data?.error === "telegram_failed" ||
+          data?.error === "webhook_failed" ||
+          data?.error === "webhook_unauthorized"
+        ) {
           throw new Error("smtp");
         }
         if (data?.error === "smtp_auth_failed") {

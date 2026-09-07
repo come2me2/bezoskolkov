@@ -48,9 +48,19 @@ export function telegramConfigured() {
   return Boolean(cleanEnv(process.env.TELEGRAM_BOT_TOKEN) && telegramChatIds().length);
 }
 
+export function webhookConfigured() {
+  return Boolean(
+    cleanEnv(process.env.LEAD_WEBHOOK_URL) && cleanEnv(process.env.LEAD_WEBHOOK_SECRET),
+  );
+}
+
 export function deliveryConfigured() {
   const smtpAllowed = cleanEnv(process.env.LEAD_TRY_SMTP) === "true";
-  return telegramConfigured() || (smtpConfigured() && smtpAllowed);
+  return (
+    webhookConfigured() ||
+    telegramConfigured() ||
+    (smtpConfigured() && smtpAllowed)
+  );
 }
 
 function telegramChatIds(): Array<string | number> {
@@ -89,6 +99,19 @@ export async function probeTelegramApi() {
       { method: "GET" },
       8_000,
     );
+    if (!res.ok) return { ok: false, error: `http_${res.status}` as const };
+    return { ok: true as const };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown";
+    return { ok: false, error: message };
+  }
+}
+
+export async function probeWebhook() {
+  const url = cleanEnv(process.env.LEAD_WEBHOOK_URL);
+  if (!url) return { ok: false, error: "no_url" as const };
+  try {
+    const res = await fetchWithDeadline(url, { method: "GET" }, 8_000);
     if (!res.ok) return { ok: false, error: `http_${res.status}` as const };
     return { ok: true as const };
   } catch (error) {
@@ -239,27 +262,80 @@ export async function sendLeadTelegram(payload: LeadMailPayload) {
   }
 }
 
-/** Deliver via Telegram (preferred). SMTP only if LEAD_TRY_SMTP=true
- * (outbound SMTP is often blocked on ONREZA and would hang the request).
+export async function sendLeadWebhook(payload: LeadMailPayload) {
+  const url = cleanEnv(process.env.LEAD_WEBHOOK_URL);
+  const secret = cleanEnv(process.env.LEAD_WEBHOOK_SECRET);
+  if (!url || !secret) {
+    throw new Error("webhook_not_configured");
+  }
+
+  const form = new FormData();
+  form.set("name", payload.name);
+  form.set("phone", payload.phone);
+  form.set("windows", payload.windows);
+  form.set("channel", payload.channel);
+  form.set("variant", payload.variant);
+  form.set("receivedAt", payload.receivedAt);
+  for (const photo of payload.photos) {
+    form.append(
+      "photos",
+      new Blob([new Uint8Array(photo.content)], {
+        type: photo.contentType || "application/octet-stream",
+      }),
+      photo.filename,
+    );
+  }
+
+  const res = await fetchWithDeadline(
+    url,
+    {
+      method: "POST",
+      headers: { "x-webhook-secret": secret },
+      body: form,
+    },
+    20_000,
+  );
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error("[lead] webhook failed", res.status, body.slice(0, 300));
+    if (res.status === 401) throw new Error("webhook_unauthorized");
+    throw new Error("webhook_failed");
+  }
+}
+
+/** Prefer Cloudflare Worker webhook (bypasses ONREZA Telegram block).
+ * Fallback: direct Telegram, then SMTP if LEAD_TRY_SMTP=true.
  */
 export async function deliverLead(payload: LeadMailPayload) {
+  const hasWebhook = webhookConfigured();
   const hasTg = telegramConfigured();
   const hasSmtp = smtpConfigured();
   const smtpAllowed = cleanEnv(process.env.LEAD_TRY_SMTP) === "true";
   const useSmtp = hasSmtp && smtpAllowed;
 
-  if (!hasTg && !useSmtp) {
-    if (hasSmtp && !hasTg) {
-      // SMTP alone is not reliable on ONREZA — require Telegram.
+  if (!hasWebhook && !hasTg && !useSmtp) {
+    if (hasSmtp && !hasTg && !hasWebhook) {
       throw new Error("telegram_required");
     }
     throw new Error("delivery_not_configured");
   }
 
-  const delivered: Array<"email" | "telegram"> = [];
+  const delivered: Array<"webhook" | "email" | "telegram"> = [];
   const errors: string[] = [];
 
-  if (hasTg) {
+  if (hasWebhook) {
+    try {
+      await sendLeadWebhook(payload);
+      delivered.push("webhook");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(`webhook:${message}`);
+      console.error("[lead] webhook failed", error);
+    }
+  }
+
+  if (!delivered.length && hasTg) {
     try {
       await sendLeadTelegram(payload);
       delivered.push("telegram");
@@ -289,6 +365,12 @@ export async function deliverLead(payload: LeadMailPayload) {
 
   if (!delivered.length) {
     const joined = errors.join("; ");
+    if (joined.includes("webhook_unauthorized")) {
+      throw new Error("webhook_unauthorized");
+    }
+    if (joined.includes("webhook")) {
+      throw new Error("webhook_failed");
+    }
     if (joined.includes("telegram_timeout")) {
       throw new Error("telegram_timeout");
     }

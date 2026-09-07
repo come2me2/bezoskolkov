@@ -2,14 +2,13 @@ import { About } from "@/components/About";
 import { BeforeAfter } from "@/components/BeforeAfter";
 import { Business } from "@/components/Business";
 import { Calculator } from "@/components/Calculator";
-import { Characteristics } from "@/components/Characteristics";
+import { CrashTest } from "@/components/CrashTest";
 import { DroneProtection } from "@/components/DroneProtection";
 import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Guarantee } from "@/components/Guarantee";
 import { Hero } from "@/components/Hero";
 import { HonestProtection } from "@/components/HonestProtection";
-import { HowItWorks } from "@/components/HowItWorks";
 import { LeadForm } from "@/components/LeadForm";
 import { Mounting } from "@/components/Mounting";
 import { Objections } from "@/components/Objections";
@@ -25,12 +24,11 @@ export default function HomePage() {
       <Hero />
       <TrustBar />
       <BeforeAfter />
+      <CrashTest />
       <PhotoBreak />
       <Problem />
       <DroneProtection />
-      <HowItWorks />
       <HonestProtection />
-      <Characteristics />
       <Mounting />
       <Guarantee />
       <Price />

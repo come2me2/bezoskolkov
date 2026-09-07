@@ -20,9 +20,6 @@ export function PhotoBreak() {
             caption
           />
         </div>
-        <p className="mt-4 text-center text-xs text-mute">
-          Реальные кадры монтажа. Это не стоковые изображения и не постановка испытания.
-        </p>
       </Container>
     </section>
   );

@@ -1,11 +1,11 @@
-import { DOCUMENTS, MICROCOPY, type DocumentRecord } from "@/lib/constants";
+import { DOCUMENTS, type DocumentRecord } from "@/lib/constants";
 
 export function documentHref(doc: DocumentRecord) {
   return doc.file ? `/certificates/${doc.file}` : null;
 }
 
 export function documentStatusLabel(doc: DocumentRecord) {
-  return documentHref(doc) ? "Открыть документ" : MICROCOPY.docPending;
+  return documentHref(doc) ? "Открыть документ" : "Документ готовится";
 }
 
 export function availableDocuments() {

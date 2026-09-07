@@ -12,8 +12,8 @@ export function Portfolio() {
           <Eyebrow>Монтаж</Eyebrow>
           <SectionTitle>Как выглядит установка на объекте</SectionTitle>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-mute md:text-lg">
-            Пока это фотографии процесса монтажа. Снимки готовых объектов появятся здесь после
-            загрузки оригиналов — чужие работы и стоковые кадры мы не подставляем.
+            Кадры монтажа защитной плёнки на окна — подготовка стекла, нанесение и финишная
+            проработка края.
           </p>
         </Reveal>
         <div className="mt-10 columns-1 gap-4 sm:columns-2 lg:columns-3">

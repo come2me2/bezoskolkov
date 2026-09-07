@@ -173,14 +173,13 @@ export function PhotoLeadForm({
               <Upload className="h-6 w-6 text-cta" aria-hidden />
               <span className="mt-3 text-sm text-bone">Перетащите файлы или нажмите, чтобы выбрать</span>
               <span className="mt-2 inline-flex items-center gap-1 text-xs text-mute">
-                <Camera className="h-3.5 w-3.5" aria-hidden /> Можно сразу сфотографировать окно
+                <Camera className="h-3.5 w-3.5" aria-hidden /> Галерея или камера
               </span>
             </button>
             <input
               ref={inputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               multiple
               className="sr-only"
               onChange={(e) => onFiles(e.target.files)}
@@ -268,13 +267,12 @@ export function PhotoLeadForm({
               className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-elevated text-sm hairline"
             >
               <Camera className="h-4 w-4 text-cta" aria-hidden />
-              {files.length ? MICROCOPY.photoUploaded : "Сфотографировать или прикрепить"}
+              {files.length ? MICROCOPY.photoUploaded : "Выбрать из галереи или сделать фото"}
             </button>
             <input
               ref={inputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               multiple
               className="sr-only"
               onChange={(e) => onFiles(e.target.files)}

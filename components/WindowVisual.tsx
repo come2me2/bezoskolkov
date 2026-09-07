@@ -444,7 +444,7 @@ export function WindowVisual({
         className="group relative block w-full overflow-hidden rounded-t-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/60"
         aria-label={
           phase === "intact"
-            ? `${label}: нажмите, чтобы показать взрыв БПЛА`
+            ? `${label}: нажмите`
             : `${label}: нажмите, чтобы повторить`
         }
       >
@@ -525,7 +525,7 @@ export function WindowVisual({
 
         {phase === "intact" ? (
           <span className="pointer-events-none absolute inset-x-0 bottom-4 z-20 mx-auto w-fit rounded-full bg-ink/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-bone backdrop-blur-md">
-            Нажмите — взрыв БПЛА
+            Нажмите
           </span>
         ) : null}
 

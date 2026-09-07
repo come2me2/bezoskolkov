@@ -43,9 +43,9 @@ export function Hero() {
               осколков
               <span className="absolute inset-x-0 -bottom-1 h-px bg-cta/50" />
             </span>{" "}
-            при взрывах
+            при
             <br />
-            и атаках БПЛА
+            взрывной волне
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-mute md:text-lg">
             Защитная плёнка удерживает фрагменты повреждённого стекла в раме и помогает
@@ -64,7 +64,7 @@ export function Hero() {
               </a>
             </Button>
             <Button asChild variant="secondary" size="lg">
-              <a href="#how-it-works">{CTA.howItWorks}</a>
+              <a href="#before-after">{CTA.howItWorks}</a>
             </Button>
           </div>
           <ul className="mt-6 flex flex-col gap-2 text-sm text-mute sm:flex-row sm:flex-wrap sm:gap-x-6">

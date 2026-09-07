@@ -17,7 +17,7 @@ export const CITY = "Москва";
 export const REGION = "Московская область";
 export const CITY_SHORT = "Москва и МО";
 
-export const FILM_THICKNESS = "200 мкм";
+export const FILM_THICKNESS = "200-300 мкм";
 export const FILM_CLASS = "SB2D / К4*";
 export const UV_PROTECTION = "98%";
 export const FILM_TRANSPARENCY = "100%";
@@ -38,7 +38,7 @@ export const SEO = {
   title: "БезОсколков — защита окон от осколков при взрывах и атаках БПЛА",
   description:
     "Защитная противоосколочная плёнка для окон в Москве и Московской области. Удержание осколков стекла при разрушении окна, в том числе при воздействии взрывной волны. Расчёт стоимости по фото.",
-  h1: "Защита окон от осколков при взрывах и атаках БПЛА",
+  h1: "Защита окон от осколков при взрывной волне",
   keywords: [
     "защита окон от осколков",
     "защита окон от взрывной волны",
@@ -105,15 +105,11 @@ export const MICROCOPY = {
   disclaimerShort: "Не защищает от прямого попадания БПЛА.",
   specsNote:
     "* Конкретные характеристики и условия гарантии подтверждаются документацией на используемый материал.",
-  docsPending: "Документы будут добавлены после загрузки оригиналов.",
-  docPending: "Документ будет добавлен после загрузки оригинала.",
-  crashPlaceholder: "Здесь будет размещено реальное видео испытания.",
-  portfolioPlaceholder: "Фотография объекта появится после загрузки оригинала.",
 };
 
 export const NAV = [
-  { href: "#how-it-works", label: "Как работает" },
-  { href: "#characteristics", label: "Характеристики" },
+  { href: "#before-after", label: "Как работает" },
+  { href: "#crash-test", label: "Краш-тест" },
   { href: "#mounting", label: "Монтаж" },
   { href: "#business", label: "Для бизнеса" },
   { href: "#faq", label: "FAQ" },

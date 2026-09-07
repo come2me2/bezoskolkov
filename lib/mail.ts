@@ -131,10 +131,11 @@ export async function sendLeadEmail(payload: LeadMailPayload) {
 
 export async function sendLeadTelegram(payload: LeadMailPayload) {
   const token = cleanEnv(process.env.TELEGRAM_BOT_TOKEN);
-  const chatId = cleanEnv(process.env.TELEGRAM_CHAT_ID);
-  if (!token || !chatId) {
+  const chatIdRaw = cleanEnv(process.env.TELEGRAM_CHAT_ID);
+  if (!token || !chatIdRaw) {
     throw new Error("telegram_not_configured");
   }
+  const chatId = /^-?\d+$/.test(chatIdRaw) ? Number(chatIdRaw) : chatIdRaw;
 
   const text = leadText(payload);
   const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -156,7 +157,7 @@ export async function sendLeadTelegram(payload: LeadMailPayload) {
 
   for (const photo of payload.photos.slice(0, 8)) {
     const form = new FormData();
-    form.set("chat_id", chatId);
+    form.set("chat_id", String(chatId));
     form.set(
       "document",
       new Blob([new Uint8Array(photo.content)], {
@@ -177,43 +178,60 @@ export async function sendLeadTelegram(payload: LeadMailPayload) {
   }
 }
 
-/** Deliver via Telegram and/or SMTP. Succeeds if at least one configured channel works. */
+/** Deliver via Telegram (preferred) and optional SMTP.
+ * If Telegram succeeds, SMTP is attempted in the background so slow
+ * outbound SMTP (e.g. ONREZA) does not delay the form response.
+ */
 export async function deliverLead(payload: LeadMailPayload) {
-  const tasks: Array<{ channel: "email" | "telegram"; run: () => Promise<void> }> = [];
+  const hasTg = telegramConfigured();
+  const hasSmtp = smtpConfigured();
 
-  if (telegramConfigured()) {
-    tasks.push({ channel: "telegram", run: () => sendLeadTelegram(payload) });
-  }
-  if (smtpConfigured()) {
-    tasks.push({ channel: "email", run: () => sendLeadEmail(payload) });
-  }
-
-  if (!tasks.length) {
+  if (!hasTg && !hasSmtp) {
     throw new Error("delivery_not_configured");
   }
 
-  const results = await Promise.allSettled(tasks.map((t) => t.run()));
   const delivered: Array<"email" | "telegram"> = [];
   const errors: string[] = [];
 
-  results.forEach((result, index) => {
-    const channel = tasks[index].channel;
-    if (result.status === "fulfilled") {
-      delivered.push(channel);
-    } else {
-      const message =
-        result.reason instanceof Error ? result.reason.message : String(result.reason);
-      errors.push(`${channel}:${message}`);
-      console.error(`[lead] ${channel} failed`, result.reason);
+  if (hasTg) {
+    try {
+      await sendLeadTelegram(payload);
+      delivered.push("telegram");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(`telegram:${message}`);
+      console.error("[lead] telegram failed", error);
     }
-  });
+  }
+
+  if (hasSmtp) {
+    if (delivered.length) {
+      void sendLeadEmail(payload).catch((error) => {
+        console.error("[lead] email failed (background)", error);
+      });
+    } else {
+      try {
+        await sendLeadEmail(payload);
+        delivered.push("email");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push(`email:${message}`);
+        console.error("[lead] email failed", error);
+      }
+    }
+  }
 
   if (!delivered.length) {
     const joined = errors.join("; ");
     if (joined.includes("Invalid login") || joined.includes("EAUTH")) {
       throw new Error("smtp_auth_failed");
     }
-    if (joined.includes("timeout") || joined.includes("ETIMEDOUT") || joined.includes("Timeout")) {
+    if (
+      joined.includes("timeout") ||
+      joined.includes("ETIMEDOUT") ||
+      joined.includes("Timeout") ||
+      joined.includes("AbortError")
+    ) {
       throw new Error("delivery_timeout");
     }
     throw new Error("send_failed");

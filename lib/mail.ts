@@ -289,7 +289,7 @@ export async function deliverLead(payload: LeadMailPayload) {
 
   if (!delivered.length) {
     const joined = errors.join("; ");
-    if (joined.includes("telegram_timeout") || joined.includes("telegram_timeout")) {
+    if (joined.includes("telegram_timeout")) {
       throw new Error("telegram_timeout");
     }
     if (joined.includes("telegram")) {

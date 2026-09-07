@@ -4,9 +4,10 @@ import type { ReactNode } from "react";
 
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { JsonLd } from "@/components/JsonLd";
 import { MobileCTA } from "@/components/MobileCTA";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { BRAND_NAME, CITY, REGION, SEO, SITE_URL } from "@/lib/constants";
+import { BRAND_NAME, SEO, SITE_URL } from "@/lib/constants";
 import { themeInitScript } from "@/lib/theme";
 
 import "./globals.css";
@@ -25,9 +26,17 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: SEO.title,
+  title: {
+    default: SEO.title,
+    template: `%s · ${BRAND_NAME}`,
+  },
   description: SEO.description,
   keywords: SEO.keywords,
+  applicationName: BRAND_NAME,
+  authors: [{ name: BRAND_NAME, url: SITE_URL }],
+  creator: BRAND_NAME,
+  publisher: BRAND_NAME,
+  category: "construction",
   alternates: { canonical: "/" },
   openGraph: {
     title: SEO.title,
@@ -35,22 +44,38 @@ export const metadata: Metadata = {
     locale: "ru_RU",
     type: "website",
     siteName: BRAND_NAME,
+    url: SITE_URL,
+    images: [
+      {
+        url: "/images/hero-banner.jpg",
+        width: 1920,
+        height: 2560,
+        alt: "Окно с защитной противоосколочной плёнкой БезОсколков",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SEO.title,
     description: SEO.description,
+    images: ["/images/hero-banner.jpg"],
   },
-  robots: { index: true, follow: true },
-};
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  name: BRAND_NAME,
-  description: SEO.description,
-  areaServed: [CITY, REGION],
-  url: SITE_URL,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  other: {
+    "geo.region": "RU-MOW",
+    "geo.placename": "Москва",
+    "AI-Content": "original",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -58,6 +83,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ru" className={`${inter.variable} ${manrope.variable}`} data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />
       </head>
       <body className="grain min-h-screen bg-ink font-sans text-bone antialiased">
         <ThemeProvider>
@@ -67,10 +93,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           >
             Перейти к содержимому
           </a>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
+          <JsonLd />
           <Header />
           {children}
           <Footer />

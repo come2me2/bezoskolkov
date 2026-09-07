@@ -12,7 +12,6 @@ import { HonestProtection } from "@/components/HonestProtection";
 import { LeadForm } from "@/components/LeadForm";
 import { Mounting } from "@/components/Mounting";
 import { Objections } from "@/components/Objections";
-import { PhotoBreak } from "@/components/PhotoBreak";
 import { Price } from "@/components/Price";
 import { Problem } from "@/components/Problem";
 import { Process } from "@/components/Process";
@@ -25,7 +24,6 @@ export default function HomePage() {
       <TrustBar />
       <BeforeAfter />
       <CrashTest />
-      <PhotoBreak />
       <Problem />
       <DroneProtection />
       <HonestProtection />

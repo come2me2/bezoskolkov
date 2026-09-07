@@ -75,6 +75,7 @@ export const metadata: Metadata = {
     "geo.region": "RU-MOW",
     "geo.placename": "Москва",
     "AI-Content": "original",
+    "yandex-verification": "dc31af58e7906194",
   },
 };
 

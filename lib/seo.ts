@@ -52,7 +52,7 @@ export function buildLocalBusinessJsonLd() {
     name: BRAND_NAME,
     legalName: LEGAL_NAME,
     url: SITE_URL,
-    image: `${SITE_URL}/images/hero-banner.jpg`,
+    image: `${SITE_URL}/images/og-share.png`,
     description: SEO.description,
     telephone: PHONE,
     email: EMAIL,
@@ -126,7 +126,9 @@ export function buildWebPageJsonLd() {
     about: { "@id": `${SITE_URL}/#service` },
     primaryImageOfPage: {
       "@type": "ImageObject",
-      url: `${SITE_URL}/images/hero-banner.jpg`,
+      url: `${SITE_URL}/images/og-share.png`,
+      width: 1200,
+      height: 630,
     },
     speakable: {
       "@type": "SpeakableSpecification",

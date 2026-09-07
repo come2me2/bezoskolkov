@@ -47,10 +47,10 @@ export const metadata: Metadata = {
     url: SITE_URL,
     images: [
       {
-        url: "/images/hero-banner.jpg",
-        width: 1920,
-        height: 2560,
-        alt: "Окно с защитной противоосколочной плёнкой БезОсколков",
+        url: "/images/og-share.png",
+        width: 1200,
+        height: 630,
+        alt: "БезОсколков — защитная противоосколочная плёнка",
       },
     ],
   },
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SEO.title,
     description: SEO.description,
-    images: ["/images/hero-banner.jpg"],
+    images: ["/images/og-share.png"],
   },
   robots: {
     index: true,

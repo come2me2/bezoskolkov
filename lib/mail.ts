@@ -45,14 +45,19 @@ export function smtpConfigured() {
 }
 
 export function telegramConfigured() {
-  return Boolean(
-    cleanEnv(process.env.TELEGRAM_BOT_TOKEN) &&
-      cleanEnv(process.env.TELEGRAM_CHAT_ID),
-  );
+  return Boolean(cleanEnv(process.env.TELEGRAM_BOT_TOKEN) && telegramChatIds().length);
 }
 
 export function deliveryConfigured() {
   return smtpConfigured() || telegramConfigured();
+}
+
+function telegramChatIds(): Array<string | number> {
+  return cleanEnv(process.env.TELEGRAM_CHAT_ID)
+    .split(/[,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((id) => (/^-?\d+$/.test(id) ? Number(id) : id));
 }
 
 function leadRecipients() {
@@ -131,50 +136,67 @@ export async function sendLeadEmail(payload: LeadMailPayload) {
 
 export async function sendLeadTelegram(payload: LeadMailPayload) {
   const token = cleanEnv(process.env.TELEGRAM_BOT_TOKEN);
-  const chatIdRaw = cleanEnv(process.env.TELEGRAM_CHAT_ID);
-  if (!token || !chatIdRaw) {
+  const chatIds = telegramChatIds();
+  if (!token || !chatIds.length) {
     throw new Error("telegram_not_configured");
   }
-  const chatId = /^-?\d+$/.test(chatIdRaw) ? Number(chatIdRaw) : chatIdRaw;
 
   const text = leadText(payload);
-  const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      disable_web_page_preview: true,
-    }),
-    signal: AbortSignal.timeout(15_000),
-  });
+  let delivered = 0;
+  const errors: string[] = [];
 
-  if (!msgRes.ok) {
-    const body = await msgRes.text().catch(() => "");
-    console.error("[lead] telegram message failed", msgRes.status, body.slice(0, 300));
-    throw new Error("telegram_failed");
+  for (const chatId of chatIds) {
+    try {
+      const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          disable_web_page_preview: true,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+
+      if (!msgRes.ok) {
+        const body = await msgRes.text().catch(() => "");
+        console.error("[lead] telegram message failed", chatId, msgRes.status, body.slice(0, 300));
+        errors.push(String(chatId));
+        continue;
+      }
+
+      for (const photo of payload.photos.slice(0, 8)) {
+        const form = new FormData();
+        form.set("chat_id", String(chatId));
+        form.set(
+          "document",
+          new Blob([new Uint8Array(photo.content)], {
+            type: photo.contentType || "application/octet-stream",
+          }),
+          photo.filename,
+        );
+        const docRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+          method: "POST",
+          body: form,
+          signal: AbortSignal.timeout(30_000),
+        });
+        if (!docRes.ok) {
+          const body = await docRes.text().catch(() => "");
+          console.error("[lead] telegram document failed", chatId, docRes.status, body.slice(0, 300));
+          throw new Error("telegram_failed");
+        }
+      }
+
+      delivered += 1;
+    } catch (error) {
+      console.error("[lead] telegram chat failed", chatId, error);
+      errors.push(String(chatId));
+    }
   }
 
-  for (const photo of payload.photos.slice(0, 8)) {
-    const form = new FormData();
-    form.set("chat_id", String(chatId));
-    form.set(
-      "document",
-      new Blob([new Uint8Array(photo.content)], {
-        type: photo.contentType || "application/octet-stream",
-      }),
-      photo.filename,
-    );
-    const docRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
-      method: "POST",
-      body: form,
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!docRes.ok) {
-      const body = await docRes.text().catch(() => "");
-      console.error("[lead] telegram document failed", docRes.status, body.slice(0, 300));
-      throw new Error("telegram_failed");
-    }
+  if (!delivered) {
+    console.error("[lead] telegram failed for all chats", errors.join(", "));
+    throw new Error("telegram_failed");
   }
 }
 
